@@ -1,7 +1,6 @@
 (ns status-im.chat.views.message.message
   (:require-macros [status-im.utils.views :refer [defview letsubs]])
   (:require [re-frame.core :as re-frame]
-            [clojure.walk :as walk]
             [reagent.core :as reagent]
             [status-im.ui.components.react :as react]
             [status-im.ui.components.animation :as animation]
@@ -23,14 +22,6 @@
             [taoensso.timbre :as log]))
 
 (def window-width (:width (react/get-dimensions "window")))
-
-(defview message-author-name [{:keys [outgoing from username] :as message}]
-  (letsubs [current-account [:get-current-account]
-            incoming-name   [:contact-name-by-identity from]]
-    (when-let [name (if outgoing
-                      (:name current-account)
-                      (or incoming-name username (gfycat/generate-gfy from)))]
-      [react/text {:style style/author} name])))
 
 (defview message-content-status []
   (letsubs [{:keys [chat-id group-id name color public-key]} [:get-current-chat]
@@ -93,7 +84,6 @@
 (defn message-view
   [{:keys [group-chat] :as message} content]
   [react/view (style/message-view message)
-   (when group-chat [message-author-name message])
    content])
 
 (def replacements
@@ -236,22 +226,29 @@
   (letsubs [{:keys [photo-path]} [:get-current-account]]
     (photo from photo-path)))
 
+(defview message-author-name [from]
+  (letsubs [username    [:contact-name-by-identity from]]
+    [react/text {:style style/message-author-name} username]))
+
 (defn message-body
-  [{:keys [last-outgoing? message-type same-author? from outgoing group-chat] :as message} content]
+  [{:keys [last-outgoing? last-by-same-author? message-type same-author? from outgoing group-chat] :as message} content]
   [react/view style/group-message-wrapper
    [react/view (style/message-body message)
     [react/view style/message-author
-     (when-not same-author?
+     (when last-by-same-author?
        (if outgoing
          [my-photo from]
          [member-photo from]))]
-    [react/view (style/group-message-view message)
-     content
-     (when last-outgoing?
-       (if (or (= (keyword message-type) :group-user-message)
-               group-chat)
-         [group-message-delivery-status message]
-         [message-delivery-status message]))]]])
+    [react/view (style/group-message-view outgoing)
+     (when-not same-author?
+       [message-author-name from])
+     content]]
+   (when last-outgoing?
+     [react/view style/delivery-status
+     (if (or (= (keyword message-type) :group-user-message)
+             group-chat)
+       [group-message-delivery-status message]
+       [message-delivery-status message])])])
 
 (defn message-container-animation-logic [{:keys [to-value val callback]}]
   (fn [_]

@@ -3,7 +3,6 @@
   (:require [clojure.string :as string]
             [re-frame.core :as re-frame]
             [status-im.chat.styles.screen :as style]
-            [status-im.utils.datetime :as time]
             [status-im.utils.platform :as platform]
             [status-im.chat.views.toolbar-content :as toolbar-content]
             [status-im.chat.views.message.message :as message]
@@ -14,6 +13,7 @@
             [status-im.i18n :as i18n]
             [status-im.ui.components.react :as react]
             [status-im.ui.components.list.views :as list]
+            [status-im.ui.components.list-selection :as list-selection]
             [status-im.ui.components.icons.vector-icons :as vector-icons]
             [status-im.ui.components.status-bar.view :as status-bar]
             [status-im.ui.components.chat-icon.screen :as chat-icon-screen]
@@ -25,14 +25,13 @@
   (letsubs [{:keys [chat-id group-chat name]} [:get-current-chat]]
     [chat-icon-screen/chat-icon-view-action chat-id group-chat name true]))
 
-(defn- toolbar-action [show-actions?]
+(defn toolbar-action [chat-id chat-name group-chat public?]
   [react/touchable-highlight
-   {:on-press            #(re-frame/dispatch [:set-chat-ui-props {:show-actions? (not show-actions?)}])
+   {:on-press            #(list-selection/show {:title chat-name
+                                                :options (actions/chat-actions chat-id group-chat public?)})
     :accessibility-label :chat-menu}
    [react/view style/action
-    (if show-actions?
-      [vector-icons/icon :icons/dropdown-up]
-      [chat-icon])]])
+    [vector-icons/icon :icons/dots-horizontal]]])
 
 (defview add-contact-bar []
   (letsubs [chat-id          [:get-current-chat-id]
@@ -45,19 +44,22 @@
          (i18n/label :t/add-to-contacts)]]])))
 
 (defview chat-toolbar []
-  (letsubs [show-actions? [:get-current-chat-ui-prop :show-actions?]
+  (letsubs [chat-id       [:get-current-chat-id]
             accounts      [:get-accounts]
-            creating?     [:get :accounts/creating-account?]]
+            creating?     [:get :accounts/creating-account?]
+            chat-name     [:chat :name]
+            group-chat    [:chat :group-chat]
+            public?       [:chat :public?]]
     [react/view
      [status-bar/status-bar]
-     [toolbar/toolbar {}
-      (when-not (or show-actions? creating?)
+     [toolbar/platform-agnostic-toolbar {}
+      (when-not creating?
         (if (empty? accounts)
           [toolbar/nav-clear-text {:handler #(re-frame/dispatch [:navigate-to-modal :recover-modal])}
            (i18n/label :t/recover)]
           toolbar/default-nav-back))
       [toolbar-content/toolbar-content-view]
-      [toolbar-action show-actions?]]
+      [toolbar-action chat-id chat-name group-chat public?]]
      [add-contact-bar]]))
 
 (defmulti message-row (fn [{{:keys [type]} :row}] type))
@@ -78,7 +80,7 @@
   (letsubs [opacity       (animation/create-value 0)
             duration      (if platform/android? 100 200)
             timeout       (if platform/android? 50 0)]
-    {:component-did-mount (fn [component]
+    {:component-did-mount (fn [_]
                             (animation/start
                              (animation/anim-sequence
                               [(animation/anim-delay timeout)
@@ -106,9 +108,7 @@
 
 (defview chat []
   (letsubs [{:keys [group-chat input-text]} [:get-current-chat]
-            show-actions?                   [:get-current-chat-ui-prop :show-actions?]
             show-bottom-info?               [:get-current-chat-ui-prop :show-bottom-info?]
-            show-emoji?                     [:get-current-chat-ui-prop :show-emoji?]
             layout-height                   [:get :layout-height]
             current-view                    [:get :view-id]]
     {:component-will-unmount #(re-frame/dispatch [:set-chat-ui-props {:show-emoji? false}])}
@@ -122,8 +122,6 @@
        [messages-view-animation
         [messages-view group-chat]])
      [input/container {:text-empty? (string/blank? input-text)}]
-     (when show-actions?
-       [actions/actions-view])
      (when show-bottom-info?
        [bottom-info/bottom-info-view])
      [offline/offline-view {:top (get platform/platform-specific :status-bar-default-height)}]]))

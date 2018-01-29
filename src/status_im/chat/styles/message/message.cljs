@@ -1,7 +1,10 @@
 (ns status-im.chat.styles.message.message
   (:require-macros [status-im.utils.styles :refer [defstyle defnstyle]])
   (:require [status-im.ui.components.styles :as styles]
+            [status-im.ui.components.colors :as colors]
             [status-im.constants :as constants]))
+
+(def photo-size 36)
 
 (defstyle style-message-text
   {:fontSize 15
@@ -45,11 +48,11 @@
   (let [align     (if outgoing :flex-end :flex-start)
         direction (if outgoing :row-reverse :row)]
     (merge message-body-base
-           {:flexDirection direction
+           {:flex-direction direction
             :width         260
-            :paddingTop    (message-padding-top message)
-            :alignSelf     align
-            :alignItems    align}
+            :padding-top    (message-padding-top message)
+            :align-self     align
+            :align-items    align}
            (last-message-padding message))))
 
 (def selected-message
@@ -59,10 +62,10 @@
    :color      styles/text2-color})
 
 (def group-message-wrapper
-  {:flexDirection :column})
+  {:flex-direction :column})
 
 (defn group-message-view
-  [{:keys [outgoing] :as message}]
+  [outgoing]
   (let [align (if outgoing :flex-end :flex-start)]
     {:flexDirection :column
      :width         260
@@ -70,14 +73,18 @@
      :padding-right 10
      :alignItems    align}))
 
+(def delivery-status
+  {:align-self    :flex-end
+   :padding-right 56})
+
 (def message-author
-  {:width     36
-   :alignSelf :flex-start})
+  {:width      photo-size
+   :align-self :flex-end})
 
 (def photo
-  {:borderRadius 18
-   :width        36
-   :height       36})
+  {:border-radius (/ photo-size 2)
+   :width         photo-size
+   :height        photo-size})
 
 (def delivery-view
   {:flexDirection :row
@@ -255,3 +262,10 @@
   {:background-color styles/color-white
    :margin-bottom    margin
    :elevation        (if on-top? 6 5)})
+
+(def message-author-name
+  {:font-size      12
+   :letter-spacing -0.2
+   :padding-bottom 4
+   :color          colors/gray})
+

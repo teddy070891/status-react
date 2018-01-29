@@ -350,13 +350,23 @@
   (fn [cofx [chat]]
     (model/update-chat cofx chat)))
 
+(defn remove-chats [db chat-id]
+  (let [chat (get-in db [:chats chat-id])]
+    {:db                  (-> db
+                              (update :chats dissoc chat-id)
+                              (update :deleted-chats (fnil conj #{}) chat-id))
+     :delete-chat          chat
+     :delete-chat-messages chat}))
+
 (handlers/register-handler-fx
   :remove-chat
   [re-frame/trim-v]
   (fn [{:keys [db]} [chat-id]]
-    (let [chat (get-in db [:chats chat-id])]
-      {:db                  (-> db
-                                (update :chats dissoc chat-id)
-                                (update :deleted-chats (fnil conj #{}) chat-id))
-       :delete-chat          chat
-       :delete-chat-messages chat})))
+    (remove-chats db chat-id)))
+
+(handlers/register-handler-fx
+  :remove-chat-and-navigate-home
+  [re-frame/trim-v]
+  (fn [{:keys [db]} [chat-id]]
+    (merge (remove-chats db chat-id)
+           {:dispatch [:navigation-replace :home]})))

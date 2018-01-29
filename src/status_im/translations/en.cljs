@@ -203,6 +203,8 @@
    :clear-history                         "Clear history"
    :mute-notifications                    "Mute notifications"
    :leave-chat                            "Leave chat"
+   :leave-group-chat                      "Leave group chat"
+   :leave-public-chat                     "Leave public chat"
    :chat-settings                         "Chat settings"
    :edit                                  "Edit"
    :add-members                           "Add members"

@@ -37,6 +37,10 @@
    :width      8
    :height     14})
 
+(def chat-toolbar-contents
+  {:flex-direction :row
+   :flex           1})
+
 (defnstyle chat-name-view [show-actions]
   {:flex            1
    :justify-content :center
