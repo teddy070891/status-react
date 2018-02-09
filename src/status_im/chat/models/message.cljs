@@ -1,10 +1,11 @@
 (ns status-im.chat.models.message
   (:require [re-frame.core :as re-frame]
             [status-im.constants :as constants]
+            [status-im.protocol.handlers :as protocol-handlers]
             [status-im.chat.events.console :as console-events]
             [status-im.chat.events.requests :as requests-events]
             [status-im.chat.models :as chat-model]
-            [status-im.chat.models.commands :as commands-model] 
+            [status-im.chat.models.commands :as commands-model]
             [status-im.utils.clocks :as clocks-utils]))
 
 (defn- get-current-account
@@ -138,7 +139,7 @@
                                          :from current-account-id}}})))
 
 (defn- generate-message
-  [{:keys [network-status]} chat-id message] 
+  [{:keys [network-status]} chat-id message]
   (assoc (select-keys message [:from :message-id])
          :payload (cond-> (select-keys message [:content :content-type :clock-value :timestamp :show?])
                     (= :offline network-status)
