@@ -1,7 +1,6 @@
 (ns status-im.chat.models.message
   (:require [re-frame.core :as re-frame]
-            [status-im.constants :as constants]
-            [status-im.protocol.handlers :as protocol-handlers]
+            [status-im.constants :as constants] 
             [status-im.chat.events.console :as console-events]
             [status-im.chat.events.requests :as requests-events]
             [status-im.chat.models :as chat-model]
