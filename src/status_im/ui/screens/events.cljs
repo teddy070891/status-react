@@ -279,7 +279,7 @@
 
 (handlers/register-handler-fx
   :initialize-account
-  (fn [_ [_ address events-after]]
+  (fn [_ [_ address new-account? events-after]]
     {:dispatch-n (cond-> [[:initialize-account-db address]
                           [:load-processed-messages]
                           [:initialize-protocol address]
@@ -292,7 +292,11 @@
                           [:send-account-update-if-needed]
                           [:update-wallet]
                           [:update-transactions]
-                          [:get-fcm-token]]
+                          [:get-fcm-token]
+                          [:navigate-to-clean :home]
+                          (if new-account?
+                            [:navigate-to-chat console-chat-id]
+                            [:navigate-to :home])]
                    (seq events-after)
                    (into events-after))}))
 
