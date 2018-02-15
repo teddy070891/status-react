@@ -9,7 +9,7 @@
             [status-im.ui.screens.profile.navigation]
             [status-im.ui.screens.accounts.events :as accounts-events]
             [status-im.chat.events :as chat-events]
-            [status-im.chat.events.input :as input-events]
+            [status-im.chat.events.input :as input.events]
             [status-im.utils.gfycat.core :as gfycat]
             [status-im.utils.handlers :as handlers]
             [status-im.utils.image-processing :refer [img->base64]]
@@ -37,7 +37,7 @@
     (let [send-command (get-in contacts chat-const/send-command-ref)]
       (-> (chat-events/navigate-to-chat cofx chat-id)
           (as-> fx
-              (merge fx (input-events/select-chat-input-command (:db fx) send-command nil true)))))))
+              (merge fx (input.events/select-chat-input-command (:db fx) send-command nil true)))))))
 
 (handlers/register-handler-fx
   :profile/send-message

@@ -14,6 +14,7 @@
             [status-im.utils.async :as async-utils]
             [status-im.protocol.message-cache :as cache]
             [status-im.protocol.listeners :as listeners]
+            [status-im.chat.models :as model]
             [status-im.chat.models.message :as models.message]
             [status-im.protocol.web3.inbox :as inbox]
             [status-im.protocol.web3.keys :as web3.keys]
@@ -164,9 +165,24 @@
       (re-frame/dispatch [:chat-received-message/add message']))))
 
 (re-frame/reg-fx
-  ::stop-watching-group!
+  :start-watching-group!
+  (fn [params]
+    (protocol/start-watching-group! params)))
+
+(re-frame/reg-fx
+  :stop-watching-group!
   (fn [params]
     (protocol/stop-watching-group! params)))
+
+(re-frame/reg-fx
+  :leave-group-chat!
+  (fn [params]
+    (protocol/leave-group-chat! params)))
+
+(re-frame/reg-fx
+  :invite-to-group!
+  (fn [params]
+    (protocol/invite-to-group! params)))
 
 (re-frame/reg-fx
   ::participant-left-group-message
@@ -472,7 +488,7 @@
                                                    (assoc :dispatch [:update-message-status message :delivered]))
                          :seen                   {:dispatch [:update-message-status message :seen]}
                          :group-invitation       {:dispatch [:group-chat-invite-received message]}
-                         :update-group           {:dispatch [:update-group-message message]}
+                         :update-group           {:dispatch [:update-group message]}
                          :add-group-identity     {:dispatch [:participant-invited-to-group message]}
                          :remove-group-identity  {:dispatch [:participant-removed-from-group message]}
                          :leave-group            {:dispatch [:participant-left-group message]}
@@ -549,6 +565,38 @@
 ;;GROUP
 
 (handlers/register-handler-fx
+  :group-chat-invite-received
+  [re-frame/trim-v]
+  (fn [{{:keys [current-public-key web3] :as db} :db}
+       [{:keys [from] {:keys [group-id group-name contacts keypair timestamp]} :payload}]]
+    (let [{:keys [private public]} keypair]
+      (let [filtered-contacts (keep (fn [identity]
+                                      (when (not= identity current-public-key)
+                                        {:identity identity}))
+                                    contacts)
+            chat              {:chat-id     group-id
+                               :name        group-name
+                               :group-chat  true
+                               :group-admin from
+                               :public-key  public
+                               :private-key private
+                               :contacts    filtered-contacts
+                               :added-to-at timestamp
+                               :timestamp   timestamp
+                               :is-active   true}
+            exists?           (chats/exists? group-id)]
+        (when (or (not exists?)
+                  (chats/new-update? timestamp group-id))
+          {:start-watching-group! {:web3     web3
+                                   :group-id group-id
+                                   :identity current-public-key
+                                   :keypair  keypair
+                                   :callback #(re-frame/dispatch [:incoming-message %1 %2])}
+           :dispatch              (if exists?
+                                    [:update-chat! chat]
+                                    [:add-chat group-id chat])})))))
+
+(handlers/register-handler-fx
   :participant-invited-to-group
   [re-frame/trim-v
    (re-frame/inject-cofx ::has-contact?)]
@@ -574,8 +622,8 @@
     (when new-update?
       {::you-removed-from-group-message {:from from :message-id message-id :timestamp timestamp
                                          :group-id group-id}
-       ::stop-watching-group! {:web3     web3
-                               :group-id group-id}
+       :stop-watching-group! {:web3     web3
+                              :group-id group-id}
        :dispatch [:update-chat! {:chat-id         group-id
                                  :removed-from-at timestamp
                                  :is-active       false}]})))
@@ -614,6 +662,28 @@
        :db (update-in db [:chats group-id :contacts]
                       #(remove (fn [{:keys [identity]}]
                                  (= identity from)) %))})))
+
+(handlers/register-handler-fx
+  :update-group
+  [re-frame/trim-v]
+  (fn [{{:keys [current-public-key web3 chats]} :db :as cofx} [{:keys [from payload]}]]
+    (let [{:keys [group-id keypair timestamp]} payload
+          {:keys [private public]} keypair
+          active? (chats/is-active? group-id)]
+      (when (and (= from (get-in chats [group-id :group-admin]))
+                 (or (not (chats/exists? group-id))
+                     (chats/new-update? timestamp group-id)))
+        (merge (model/update-chat cofx {:chat-id     group-id
+                                        :public-key  public
+                                        :private-key private
+                                        :updated-at  timestamp})
+
+               (when active?
+                 {:start-watching-group! {:web3     web3
+                                          :group-id group-id
+                                          :identity current-public-key
+                                          :keypair  keypair
+                                          :callback #(re-frame/dispatch [:incoming-message %1 %2])}}))))))
 
 ;;ERROR
 
