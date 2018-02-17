@@ -9,8 +9,10 @@
 (def gray "#939ba1") ;; Used as a background for a light foreground and as section header and secondary text color
 (def gray-light "#e8ebec") ;; Used as divider color
 (def gray-lighter "#eef2f5")  ;; Used as a background or shadow
+(def gray-transparent "rgba(184, 193, 199, 0.5)") ;; Used for tabs
 (def blue "#4360df") ;; Used as main wallet color
 (def red "#ff2d55") ;; Used to highlight errors or "dangerous" actions
 (def text-light-gray "#212121") ;; Used for labels (home items)
+(def cyan "#7adcfb") ;; Used by wallet transaction filtering icon
 
 (def text black)
