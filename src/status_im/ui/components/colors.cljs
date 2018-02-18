@@ -10,6 +10,7 @@
 (def gray-light "#e8ebec") ;; Used as divider color
 (def gray-lighter "#eef2f5")  ;; Used as a background or shadow
 (def blue "#4360df") ;; Used as main wallet color
+(def blue-transparent "rgba(67, 96, 223, 0.10)")  ;;used as shadow for blue elements
 (def red "#ff2d55") ;; Used to highlight errors or "dangerous" actions
 (def text-light-gray "#212121") ;; Used for labels (home items)
 
