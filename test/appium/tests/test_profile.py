@@ -8,7 +8,6 @@ from tests import basic_user
 @pytest.mark.all
 class TestProfileView(SingleDeviceTestCase):
 
-    @pytest.mark.pr
     def test_qr_code_and_its_value(self):
         console_view = ConsoleView(self.driver)
         console_view.create_user()
@@ -28,9 +27,10 @@ class TestProfileView(SingleDeviceTestCase):
         home_view = console_view.get_home_view()
         home_view.add_contact(basic_user['public_key'])
         chat_view = home_view.get_chat_view()
-        chat_view.user_profile_icon_top_right.click()
-        chat_view.user_profile_details.click()
-        chat_view.find_full_text(basic_user['username'])
+        chat_view.chat_options.click()
+        chat_view.view_profile_button.click()
+        for text in basic_user['username'], 'Start conversation', 'Send transaction', 'Address', 'Public key':
+            chat_view.find_full_text(text)
 
     @pytest.mark.pr
     def test_network_switch(self):

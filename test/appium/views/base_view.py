@@ -135,10 +135,21 @@ class StatusAppIcon(BaseButton):
             "//*[@text='Status']")
 
 
+class SendMessageButton(BaseButton):
+    def __init__(self, driver):
+        super(SendMessageButton, self).__init__(driver)
+        self.locator = self.Locator.accessibility_id("send-message-button")
+
+    def click(self):
+        self.find_element().click()
+        info('Tap on %s' % self.name)
+
+
 class BaseView(object):
     def __init__(self, driver):
         self.driver = driver
 
+        self.send_message_button = SendMessageButton(self.driver)
         self.home_button = HomeButton(self.driver)
         self.wallet_button = WalletButton(self.driver)
         self.profile_button = ProfileButton(self.driver)

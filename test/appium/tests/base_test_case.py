@@ -72,7 +72,7 @@ class AbstractTestCase:
         desired_caps['appiumVersion'] = '1.7.1'
         desired_caps['platformVersion'] = '6.0'
         desired_caps['newCommandTimeout'] = 600
-        desired_caps['fullReset'] = True
+        desired_caps['fullReset'] = False
         desired_caps['unicodeKeyboard'] = True
         return desired_caps
 
@@ -108,23 +108,28 @@ class SingleDeviceTestCase(AbstractTestCase):
 
     def setup_method(self, method):
         self.update_test_info_dict()
-
         capabilities = {'local': {'executor': self.executor_local,
                                   'capabilities': self.capabilities_local},
                         'sauce': {'executor': self.executor_sauce_lab,
                                   'capabilities': self.capabilities_sauce_lab}}
-
-        self.driver = webdriver.Remote(capabilities[self.environment]['executor'],
-                                       capabilities[self.environment]['capabilities'])
-        self.driver.implicitly_wait(self.implicitly_wait)
-        test_data.test_info[test_data.test_name]['jobs'].append(self.driver.session_id)
+        counter = 0
+        self.driver = None
+        while not self.driver and counter <= 3:
+            try:
+                self.driver = webdriver.Remote(capabilities[self.environment]['executor'],
+                                               capabilities[self.environment]['capabilities'])
+                self.driver.implicitly_wait(self.implicitly_wait)
+                test_data.test_info[test_data.test_name]['jobs'].append(self.driver.session_id)
+                break
+            except WebDriverException:
+                counter += 1
 
     def teardown_method(self, method):
         if self.environment == 'sauce':
             self.print_sauce_lab_info(self.driver)
         try:
             self.driver.quit()
-        except WebDriverException:
+        except (WebDriverException, AttributeError):
             pass
 
 
@@ -171,10 +176,10 @@ class SauceMultipleDeviceTestCase(AbstractTestCase):
 
     def teardown_method(self, method):
         for driver in self.drivers:
-            self.print_sauce_lab_info(self.drivers[driver])
             try:
+                self.print_sauce_lab_info(self.drivers[driver])
                 self.drivers[driver].quit()
-            except WebDriverException:
+            except (WebDriverException, AttributeError):
                 pass
 
     @classmethod
