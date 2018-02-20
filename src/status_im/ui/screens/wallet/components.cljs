@@ -44,7 +44,7 @@
 (defn simple-screen
   ([toolbar content] (simple-screen nil toolbar content))
   ([{:keys [avoid-keyboard? status-bar-type]} toolbar content]
-   [(top-view avoid-keyboard?) {:flex 1 :background-color colors/blue}
+   [(top-view avoid-keyboard?) {:flex 1 :background-color colors/blue :behavior :padding}
     [status-bar/status-bar {:type (or status-bar-type :wallet)}]
     toolbar
     content]))
