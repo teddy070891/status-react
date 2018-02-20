@@ -5,8 +5,7 @@
             [cljs.core.async :as async]
             [status-im.transport.utils :as web3.utils]
             [status-im.test.protocol.node :as node]
-            [status-im.test.protocol.utils :as utils]
-            [status-im.protocol.core :as protocol]))
+            [status-im.test.protocol.utils :as utils]))
 
 ;; NOTE(oskarth): All these tests are evaluated in NodeJS
 
