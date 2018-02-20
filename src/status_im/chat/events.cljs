@@ -354,9 +354,9 @@
    (re-frame/inject-cofx :random-id)
    (re-frame/inject-cofx :get-new-keypair!)]
   (fn [{:keys [db random-id] :as cofx} [group-name]]
-    (let [{:keys [web3 current-public-key]} db
+    (let [{:keys [web3 current-public-key] :group/keys [selected-contacts]} db
           new-chat   (model/prepare-group-chat cofx group-name)
-          identities (mapv :identity contacts)
+          identities (mapv :identity selected-contacts)
           {:keys [chat-id public-key private-key contacts name]} new-chat]
       {:db                    (-> db
                                   (assoc-in [:chats chat-id] new-chat)
