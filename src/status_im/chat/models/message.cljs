@@ -1,11 +1,13 @@
 (ns status-im.chat.models.message
   (:require [re-frame.core :as re-frame]
-            [status-im.constants :as constants] 
+            [status-im.constants :as constants]
             [status-im.chat.events.console :as console-events]
             [status-im.chat.events.requests :as requests-events]
             [status-im.chat.models :as chat-model]
             [status-im.chat.models.commands :as commands-model]
-            [status-im.utils.clocks :as clocks-utils]))
+            [status-im.utils.clocks :as clocks-utils]
+            [status-im.transport.message.core :as transport]
+            [status-im.transport.message.v1.contact :as transport-contact]))
 
 (defn- get-current-account
   [{:accounts/keys [accounts current-account-id]}]
@@ -144,6 +146,11 @@
                     (= :offline network-status)
                     (assoc :show? false))))
 
+(defn- generate-new-protocol-message [{:keys [command message]}]
+  (-> (or command message)
+      (select-keys [:message-id :content :content-type :clock-value])
+      (assoc :timestamp (datetime-utils/now-ms))))
+
 (defn send
   [{{:keys          [web3 chats]
      :accounts/keys [accounts current-account-id]
@@ -197,6 +204,10 @@
       (assoc :message-type :group-user-message)
       (not group-chat)
       (assoc :to chat-id :message-type :user-message))))
+
+(defn- send-contact-message [cofx chat-id message]
+  (when-not (get-in cofx [:db :contacts/contacts chat-id :dapp?])
+    (transport/send (transport-contact/->ContactMessage message) cofx chat-id)))
 
 (defn send-message [{:keys [db now random-id] :as cofx} {:keys [chat-id] :as params}]
   (let [chat    (get-in db [:chats chat-id])
