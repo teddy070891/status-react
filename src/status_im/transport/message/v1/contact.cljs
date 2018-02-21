@@ -31,7 +31,7 @@
                              :success-event ::send-new-sym-key}}))
   (receive [this {:keys [db] :as cofx} chat-id signature]
     (let [message-id (protocol/message-id this)]
-      (when (protocol/is-new? message-id) 
+      (when (protocol/is-new? message-id)
         (message/receive-contact-request (assoc cofx :db (protocol/ack db message-id chat-id))
                                          signature
                                          this)))))
@@ -39,12 +39,12 @@
 (defrecord ContactRequestConfirmed [name profile-image address fcm-token]
   message/StatusMessage
   (send [this {:keys [db] :as cofx} chat-id]
-    (let [message-id (protocol/message-id this)] 
-      (merge {:db (protocol/requires-ack db message-id chat-id)}
-             (protocol/send this))))
+    (let [message-id (protocol/message-id this)]
+      (-> {:db (protocol/requires-ack db message-id chat-id)}
+          (protocol/send cofx this))))
   (receive [this {:keys [db] :as  cofx} chat-id signature]
     (let [message-id (protocol/message-id this)]
-      (when (protocol/is-new? message-id) 
+      (when (protocol/is-new? message-id)
         (message/receive-contact-request-confirmation (assoc cofx :db (-> (protocol/init-chat db chat-id)
                                                                           (protocol/ack message-id chat-id)))
                                                       signature
@@ -61,14 +61,14 @@
 
 (handlers/register-handler-fx
   ::send-new-sym-key
-  (fn [{:keys [db] :as cofx} [_ {:keys [chat-id message sym-key sym-key-id]}]] 
+  (fn [{:keys [db] :as cofx} [_ {:keys [chat-id message sym-key sym-key-id]}]]
     (message/send (NewContactKey. sym-key message)
                   (assoc-in cofx [:db :transport/chats chat-id :sym-key-id] sym-key-id)
                   chat-id)))
 
 (handlers/register-handler-fx
   ::add-new-sym-key
-  (fn [{:keys [db] :as cofx} [_ {:keys [sym-key-id chat-id message]}]] 
+  (fn [{:keys [db] :as cofx} [_ {:keys [sym-key-id chat-id message]}]]
     (message/receive message
                      (assoc-in cofx [:db :transport/chats chat-id :sym-key-id] sym-key-id)
                      chat-id
