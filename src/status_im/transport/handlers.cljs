@@ -23,8 +23,6 @@
       :identity                    public-key
       :pending-messages            pending-messages})))
 
-
-
 (handlers/register-handler-fx
   :protocol/receive-whisper-message
   [re-frame/trim-v]

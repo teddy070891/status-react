@@ -21,7 +21,7 @@
     (message-cache/add! message-id)))
 
 (defn requires-ack [cofx message-id chat-id]
-  (update-in cofx [:db :transport/chats chat-id :waiting-ack] conj message-id))
+  (update-in cofx [:db :transport/chats chat-id :pending-ack] conj message-id))
 
 (defn ack [cofx message-id chat-id]
   (update-in cofx [:db :transport/chats chat-id :ack] conj message-id))
