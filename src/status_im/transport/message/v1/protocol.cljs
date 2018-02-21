@@ -40,17 +40,17 @@
                           :payload  payload
                           :topic (get-topic chat-id)}}}))
 
-(defn send-with-pubkey [{:keys [db] :as cofx} {:keys [payload chat-id]}]
+(defn send-with-pubkey [{:keys [db]} {:keys [payload chat-id]}]
   (let [{:accounts/keys [account]} db
         {:keys [identity]} account]
-    (assoc cofx :shh/post {:web3    (:web3 db)
-                           :message {:sig identity
-                                     :pubKey chat-id
-                                     :ttl ttl
-                                     :powTarget 0.001
-                                     :powTime 1
-                                     :payload  payload
-                                     :topic (get-topic chat-id)}})))
+    {:shh/post {:web3    (:web3 db)
+                :message {:sig identity
+                          :pubKey chat-id
+                          :ttl ttl
+                          :powTarget 0.001
+                          :powTime 1
+                          :payload  payload
+                          :topic (get-topic chat-id)}}}))
 
 (defrecord Ack [message-ids]
   message/StatusMessage
