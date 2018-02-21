@@ -7,12 +7,14 @@
 (defrecord NewContactKey [sym-key message]
   message/StatusMessage
   (send [this {:keys [db] :as cofx} chat-id]
-    (protocol/send-with-pubkey cofx {:web3    (:web3 db)
-                                     :chat-id chat-id
-                                     :payload this}))
+    (merge {:db db}
+           (protocol/send-with-pubkey cofx {:web3    (:web3 db)
+                                            :chat-id chat-id
+                                            :payload this})))
   (receive [this {:keys [db]} chat-id signature]
     (let [{:keys [web3]} db]
-      {:shh/add-new-sym-key {:web3       web3
+      {:db (protocol/init-chat db chat-id)
+       :shh/add-new-sym-key {:web3       web3
                              :sym-key    sym-key
                              :chat-id    chat-id
                              :message    message
@@ -33,8 +35,7 @@
   (receive [this {:keys [db] :as cofx} chat-id signature]
     (let [message-id (transport.utils/message-id this)]
       (when (protocol/is-new? message-id)
-        (message/receive-contact-request (assoc cofx :db (-> (protocol/init-chat db chat-id)
-                                                             (protocol/ack message-id chat-id)))
+        (message/receive-contact-request (assoc cofx :db (protocol/ack db message-id chat-id))
                                          signature
                                          this)))))
 
@@ -43,19 +44,22 @@
   (send [this {:keys [db] :as cofx} chat-id]
     (let [message-id (transport.utils/message-id this)]
       (-> {:db (protocol/requires-ack db message-id chat-id)}
-          (protocol/send this))))
+          (protocol/send {:web3    (:web3 db)
+                          :chat-id chat-id
+                          :payload this}))))
   (receive [this {:keys [db] :as  cofx} chat-id signature]
     (let [message-id (transport.utils/message-id this)]
       (when (protocol/is-new? message-id)
-        (message/receive-contact-request-confirmation (assoc cofx :db (-> (protocol/init-chat db chat-id)
-                                                                          (protocol/ack message-id chat-id)))
+        (message/receive-contact-request-confirmation (assoc cofx :db (protocol/ack db message-id chat-id))
                                                       signature
                                                       this)))))
 
 (defrecord ContactMessage [content]
   message/StatusMessage
-  (send [this cofx chat-id]
-    (protocol/send cofx this))
+  (send [this {:keys [db] :as cofx} chat-id]
+    (protocol/send cofx {:web3    (:web3 db)
+                         :chat-id chat-id
+                         :payload this}))
   (receive [this cofx chat-id signature]
     {:dispatch [:pre-received-message (assoc content
                                              :chat-id chat-id
@@ -65,18 +69,23 @@
   ::send-new-sym-key
   (fn [{:keys [db] :as cofx} [_ {:keys [chat-id message sym-key sym-key-id]}]]
     (let [{:keys [web3 current-public-key]} db]
-      (merge  {:shh/add-filter {:web3 web3
-                                :sym-key-id sym-key-id
-                                :topic (transport.utils/get-topic current-public-key)
-                                :chat-id chat-id}}
-              (message/send (NewContactKey. sym-key message)
-                            (assoc-in cofx [:db :transport/chats chat-id :sym-key-id] sym-key-id)
-                            chat-id)))))
+      (merge {:shh/add-filter {:web3 web3
+                               :sym-key-id sym-key-id
+                               :topic (transport.utils/get-topic current-public-key)
+                               :chat-id chat-id}}
+             (message/send (NewContactKey. sym-key message)
+                           (assoc-in cofx [:db :transport/chats chat-id :sym-key-id] sym-key-id)
+                           chat-id)))))
 
 (handlers/register-handler-fx
   ::add-new-sym-key
   (fn [{:keys [db] :as cofx} [_ {:keys [sym-key-id chat-id message]}]]
-    (message/receive message
-                     (assoc-in cofx [:db :transport/chats chat-id :sym-key-id] sym-key-id)
-                     chat-id
-                     chat-id)))
+    (let [{:keys [web3 current-public-key]} db]
+      (merge {:shh/add-filter {:web3 web3
+                               :sym-key-id sym-key-id
+                               :topic (transport.utils/get-topic current-public-key)
+                               :chat-id chat-id}}
+             (message/receive message
+                              (assoc-in cofx [:db :transport/chats chat-id :sym-key-id] sym-key-id)
+                              chat-id
+                              chat-id)))))
