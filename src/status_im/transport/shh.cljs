@@ -77,13 +77,13 @@
                    :on-error   #(re-frame/dispatch [error-event %])})))
 
 (defn add-sym-key
-  [{:keys [web3 sym-key-id on-success on-error]}]
+  [{:keys [web3 sym-key on-success on-error]}]
   (.. web3
       -shh
-      (addSymKey sym-key-id (fn [err resp]
-                              (if-not err
-                                (on-success resp)
-                                (on-error err))))))
+      (addSymKey sym-key (fn [err resp]
+                           (if-not err
+                             (on-success resp)
+                             (on-error err))))))
 
 (defn get-sym-key
   [{:keys [web3 sym-key-id on-success on-error]}]

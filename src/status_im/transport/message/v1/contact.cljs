@@ -33,7 +33,8 @@
   (receive [this {:keys [db] :as cofx} chat-id signature]
     (let [message-id (transport.utils/message-id this)]
       (when (protocol/is-new? message-id)
-        (message/receive-contact-request (assoc cofx :db (protocol/ack db message-id chat-id))
+        (message/receive-contact-request (assoc cofx :db (-> (protocol/init-chat db chat-id)
+                                                             (protocol/ack message-id chat-id)))
                                          signature
                                          this)))))
 

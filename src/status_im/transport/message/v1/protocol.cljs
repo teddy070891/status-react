@@ -22,11 +22,10 @@
 
 (defn send [{:keys [db] :as cofx} {:keys [payload chat-id]}]
   ;; we assume that the chat contains the contact public-key
-  (let [{:accounts/keys [account]} db
-        {:keys [identity]} account
-        {:keys [sym-key-id topic]} (get-in db [:transport chat-id])]
+  (let [{:keys [current-public-key]} db
+        {:keys [sym-key-id topic]} (get-in db [:transport/chats chat-id])]
     {:shh/post {:web3    (:web3 db)
-                :message {:sig identity
+                :message {:sig current-public-key
                           :symKeyID sym-key-id
                           :ttl ttl
                           :powTarget 0.001
@@ -35,11 +34,10 @@
                           :topic topic}}}))
 
 (defn send-with-pubkey [{:keys [db] :as cofx} {:keys [payload chat-id]}]
-  (let [{:accounts/keys [account]} db
-        {:keys [identity]} account
-        {:keys [sym-key-id topic]} (get-in db [:transport chat-id])]
+  (let [{:keys [current-public-key]} db
+        {:keys [topic]} (get-in db [:transport/chats chat-id])]
     {:shh/post {:web3    (:web3 db)
-                :message {:sig identity
+                :message {:sig current-public-key
                           :pubKey chat-id
                           :ttl ttl
                           :powTarget 0.001
