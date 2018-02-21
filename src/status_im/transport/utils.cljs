@@ -16,6 +16,12 @@
 (defn sha3 [s]
   (.sha3 dependencies/Web3.prototype s))
 
+(defn message-id [message]
+  (sha3 (pr-str message)))
+
+(defn get-topic [chat-id]
+  (subs (sha3 chat-id) 0 10))
+
 (defn shh [web3]
   (.-shh web3))
 

@@ -3,6 +3,7 @@
             [re-frame.core :as re-frame]
             [status-im.transport.message.core :as message]
             [status-im.transport.filters :as filters]
+            [status-im.transport.utils :as transport.utils]
             [taoensso.timbre :as log]))
 
 (defn stop-whisper! []
@@ -20,6 +21,6 @@
 
   (filters/add-filter! web3
                        {:privateKeyID identity
-                        :topics [message/ping-topic]}
+                        :topics [(transport.utils/get-topic identity)]}
                        (fn [js-error js-message]
                          (re-frame/dispatch [:protocol/receive-whisper-message js-error js-message]))))

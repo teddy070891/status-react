@@ -5,16 +5,8 @@
             [status-im.transport.core :as transport]
             [status-im.transport.message.core :as message]))
 
-(def ttl 10000) ;; ttl of 10 sec
-
-(defn message-id [message]
-  (transport.utils/sha3 (pr-str message)))
-
-(defn get-topic [chat-id]
-  (subs (transport.utils/sha3 chat-id) 0 10))
-
 (defn init-chat [db chat-id]
-  (assoc-in db [:transport/chats chat-id] (transport.db/create-chat (get-topic chat-id))))
+  (assoc-in db [:transport/chats chat-id] (transport.db/create-chat (transport.utils/get-topic chat-id))))
 
 (defn is-new? [message-id]
   (when-not (message-cache/exists? message-id)
