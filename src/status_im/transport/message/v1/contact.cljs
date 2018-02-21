@@ -64,9 +64,14 @@
 (handlers/register-handler-fx
   ::send-new-sym-key
   (fn [{:keys [db] :as cofx} [_ {:keys [chat-id message sym-key sym-key-id]}]]
-    (message/send (NewContactKey. sym-key message)
-                  (assoc-in cofx [:db :transport/chats chat-id :sym-key-id] sym-key-id)
-                  chat-id)))
+    (let [{:keys [web3 current-public-key]} db]
+      (merge  {:shh/add-filter {:web3 web3
+                                :sym-key-id sym-key-id
+                                :topic (transport.utils/get-topic current-public-key)
+                                :chat-id chat-id}}
+              (message/send (NewContactKey. sym-key message)
+                            (assoc-in cofx [:db :transport/chats chat-id :sym-key-id] sym-key-id)
+                            chat-id)))))
 
 (handlers/register-handler-fx
   ::add-new-sym-key
