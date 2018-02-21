@@ -26,7 +26,7 @@
 (defn ack [db message-id chat-id]
   (update-in db [:transport/chats chat-id :ack] conj message-id))
 
-(defn send [db {:keys [payload chat-id]}]
+(defn send [{:keys [db] :as cofx} {:keys [payload chat-id]}]
   ;; we assume that the chat contains the contact public-key
   (let [{:accounts/keys [account]} db
         {:keys [identity]} account
@@ -40,7 +40,7 @@
                           :payload  payload
                           :topic (get-topic chat-id)}}}))
 
-(defn send-with-pubkey [db {:keys [payload chat-id]}]
+(defn send-with-pubkey [{:keys [db] :as cofx} {:keys [payload chat-id]}]
   (let [{:accounts/keys [account]} db
         {:keys [identity]} account]
     {:shh/post {:web3    (:web3 db)

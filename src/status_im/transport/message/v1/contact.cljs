@@ -6,9 +6,9 @@
 (defrecord NewContactKey [sym-key message]
   message/StatusMessage
   (send [this {:keys [db] :as cofx} chat-id]
-    (protocol/send-with-pubkey db {:web3    (:web3 db)
-                                   :chat-id chat-id
-                                   :payload this}))
+    (protocol/send-with-pubkey cofx {:web3    (:web3 db)
+                                     :chat-id chat-id
+                                     :payload this}))
   (receive [this {:keys [db]} chat-id signature]
     (let [{:keys [web3]} db]
       {:shh/add-new-sym-key {:web3       web3
@@ -41,7 +41,7 @@
   (send [this {:keys [db] :as cofx} chat-id]
     (let [message-id (protocol/message-id this)]
       (-> {:db (protocol/requires-ack db message-id chat-id)}
-          (protocol/send cofx this))))
+          (protocol/send this))))
   (receive [this {:keys [db] :as  cofx} chat-id signature]
     (let [message-id (protocol/message-id this)]
       (when (protocol/is-new? message-id)
