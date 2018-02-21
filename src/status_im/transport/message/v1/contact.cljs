@@ -24,7 +24,7 @@
           message-id (protocol/message-id this)
           new-db (-> (protocol/init-chat db chat-id)
                      (protocol/requires-ack message-id chat-id))]
-      {:db db
+      {:db new-db
        :shh/get-new-sym-key {:web3 web3
                              :chat-id chat-id
                              :message this
