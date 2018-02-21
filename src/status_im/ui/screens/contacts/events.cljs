@@ -246,7 +246,7 @@
             fx (-> (navigation/navigate-to-clean db :home)
                    (add-new-contact contact)
                    (assoc :dispatch [:start-chat whisper-identity {:navigation-replace? true}]))]
-        (merge fx (send-contact-request (assoc cofx :db (:fx db)) whisper-identity))))))
+        (merge fx (send-contact-request (assoc cofx :db (:db fx)) whisper-identity))))))
 
 (defn add-pending-contact [{:keys [db] :as cofx} chat-or-whisper-id]
   (let [{:keys [chats] :contacts/keys [contacts]} db
@@ -256,7 +256,7 @@
                     (assoc :address  (public-key->address chat-or-whisper-id)
                            :pending? false))
         fx      (add-new-contact db contact)]
-    (merge fx (send-contact-request-confirmation (assoc cofx :db (:fx db)) chat-or-whisper-id))))
+    (merge fx (send-contact-request-confirmation (assoc cofx :db (:db fx)) chat-or-whisper-id))))
 
 (register-handler-fx
   :add-pending-contact
@@ -355,7 +355,7 @@
          :dispatch-n [[:start-chat whisper-identity]]}
         (cond-> (when-not dapp?)
           (as-> fx
-              (merge fx (send-contact-request-confirmation (assoc cofx :db (:fx db)) whisper-identity)))))))
+              (merge fx (send-contact-request-confirmation (assoc cofx :db (:db fx)) whisper-identity)))))))
 
 (register-handler-fx
   :add-contact-handler
