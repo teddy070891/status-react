@@ -5,7 +5,7 @@
             [status-im.transport.core :as transport]
             [status-im.transport.message.core :as message]))
 
-(def ttl (* 3600 1000)) ;; ttl of one hour
+(def ttl 10000) ;; ttl of 10 sec
 
 (defn message-id [message]
   (transport.utils/sha3 (pr-str message)))
