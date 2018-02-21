@@ -8,7 +8,8 @@
             [taoensso.timbre :as log]
             [status-im.transport.utils :as web3.utils]
             [cljs.reader :as reader]
-            [status-im.transport.message.transit :as transit]))
+            [status-im.transport.message.transit :as transit]
+            status-im.transport.shh))
 
 (re-frame/reg-fx
   :stop-whisper

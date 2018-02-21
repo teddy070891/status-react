@@ -1,10 +1,6 @@
 (ns status-im.transport.shh
   (:require [taoensso.timbre :as log]
-            [re-frame.core :as re-frame]
-            [cljs.spec.alpha :as s]
-            [status-im.utils.handlers :as handlers]
-            [status-im.transport.utils :as web3.utils]
-            [taoensso.timbre :refer-macros [debug]]
+            [re-frame.core :as re-frame] 
             [status-im.transport.message.transit :as transit]))
 
 (defn get-new-key-pair [{:keys [web3 on-success on-error]}]

@@ -15,7 +15,7 @@
                              :sym-key    sym-key
                              :chat-id    chat-id
                              :message    message
-                             :on-success ::add-new-sym-key}})))
+                             :success-event ::add-new-sym-key}})))
 
 (defrecord ContactRequest [name profile-image address fcm-token]
   message/StatusMessage
@@ -28,7 +28,7 @@
        :shh/get-new-sym-key {:web3 web3
                              :chat-id chat-id
                              :message this
-                             :on-success ::send-new-sym-key}}))
+                             :success-event ::send-new-sym-key}}))
   (receive [this {:keys [db] :as cofx} chat-id signature]
     (let [message-id (protocol/message-id this)]
       (when (protocol/is-new? message-id) 
