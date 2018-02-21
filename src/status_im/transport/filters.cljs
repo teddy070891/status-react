@@ -1,6 +1,7 @@
 (ns status-im.transport.filters
   (:require [status-im.transport.utils :as utils]
             [status-im.utils.config :as config]
+            [re-frame.core :as re-frame]
             [taoensso.timbre :as log]))
 
 
@@ -32,3 +33,12 @@
   (doseq [[web3 filters] @filters]
     (doseq [options (keys filters)]
       (remove-filter! web3 options))))
+
+(re-frame/reg-fx
+  :shh/add-filter
+  (fn [{:keys [web3 sym-key-id topic chat-id]}]
+    (add-filter! web3
+                 {:symKeyID sym-key-id
+                  :topics [topic]}
+                 (fn [js-error js-message]
+                   (re-frame/dispatch [:protocol/receive-whisper-message js-error js-message chat-id])))))
