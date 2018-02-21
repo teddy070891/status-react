@@ -146,11 +146,6 @@
                     (= :offline network-status)
                     (assoc :show? false))))
 
-(defn- generate-new-protocol-message [{:keys [command message]}]
-  (-> (or command message)
-      (select-keys [:message-id :content :content-type :clock-value])
-      (assoc :timestamp (datetime-utils/now-ms))))
-
 (defn send
   [{{:keys          [web3 chats]
      :accounts/keys [accounts current-account-id]
@@ -174,8 +169,8 @@
           {:send-public-group-message (assoc options :group-id chat-id
                                              :username (get-in accounts [current-account-id :name]))}
 
-          :else
-          (merge {:send-message (assoc-in options [:message :to] chat-id)}
+          :else 
+          (merge (transport/send (transport-contact/->ContactMessage (get-in options [:message :payload])) cofx chat-id) 
                  (when fcm-token {:send-notification {:message "message"
                                                       :payload {:title "Status" :body "You have a new message"}
                                                       :tokens [fcm-token]}})))))))

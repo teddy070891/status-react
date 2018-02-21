@@ -39,33 +39,6 @@
   (fn [coeffects _]
     (assoc coeffects :pending-messages (pending-messages/get-all))))
 
-(re-frame/reg-cofx
-  ::message-get-by-id
-  (fn [coeffects _]
-    (let [[{{:keys [message-id]} :payload}] (:event coeffects)]
-      (assoc coeffects :message-by-id (messages/get-by-id message-id)))))
-
-(re-frame/reg-cofx
-  ::chats-new-update?
-  (fn [coeffects _]
-    (let [[{{:keys [group-id timestamp]} :payload}] (:event coeffects)]
-      (assoc coeffects :new-update? (chats/new-update? timestamp group-id)))))
-
-(re-frame/reg-cofx
-  ::chats-is-active-and-timestamp
-  (fn [coeffects _]
-    (let [[{{:keys [group-id timestamp]} :payload}] (:event coeffects)]
-      (assoc coeffects :chats-is-active-and-timestamp
-             (and (chats/is-active? group-id)
-                  (> timestamp (chats/get-property group-id :timestamp)))))))
-
-(re-frame/reg-cofx
-  ::has-contact?
-  (fn [coeffects _]
-    (let [[{{:keys [group-id identity]} :payload}] (:event coeffects)]
-      (assoc coeffects :has-contact? (chats/has-contact? group-id identity)))))
-
-
 ;;;; FX
 
 (def ^:private protocol-realm-queue (async-utils/task-queue 2000))
@@ -101,8 +74,6 @@
   ::chats-remove-contact
   (fn [[group-id identity]]
     (chats/remove-contacts group-id [identity])))
-
-
 
 (re-frame/reg-fx
   ::status-init-jail

@@ -3,7 +3,7 @@
             [clojure.string :as string]
             [status-im.ui.components.styles :refer [default-chat-color]]
             [status-im.chat.constants :as chat-consts]
-            [status-im.data-store.chats :as chats]
+            [status-im.chat.models :as chat]
             [status-im.data-store.messages :as messages]
             [status-im.constants :refer [text-content-type
                                          content-type-command
@@ -33,28 +33,28 @@
                         :message-id (random/id)}})))
      (dispatch [:remove-chat current-chat-id]))))
 
-(register-handler :update-group-message
-                  (u/side-effect!
-                   (fn [{:keys [current-public-key web3 chats]}
-                        [_ {:keys                                [from]
-                            {:keys [group-id keypair timestamp]} :payload}]]
-                     #_(let [{:keys [private public]} keypair]
-                         (let [is-active (chats/is-active? group-id)
-                               chat      {:chat-id     group-id
-                                          :public-key  public
-                                          :private-key private
-                                          :updated-at  timestamp}]
-                           (when (and (= from (get-in chats [group-id :group-admin]))
-                                      (or (not (chats/exists? group-id))
-                                          (chats/new-update? timestamp group-id)))
-                             (dispatch [:update-chat! chat])
-                             (when is-active
-                               (protocol/start-watching-group!
-                                {:web3     web3
-                                 :group-id group-id
-                                 :identity current-public-key
-                                 :keypair  keypair
-                                 :callback #(dispatch [:incoming-message %1 %2])}))))))))
+(register-handler
+  :update-group-message
+  (u/side-effect!
+   (fn [{:keys [current-public-key web3 chats]}
+        [_ {:keys                                [from]
+            {:keys [group-id keypair timestamp]} :payload}]]
+     #_(let [{:keys [private public]} keypair
+           {:keys [group-admin is-active] :as chat} (get chats group-id)]
+       (when (and (= from group-admin)
+                  (or (nil? chat)
+                      (chat/new-update? timestamp group-id)))
+         (dispatch [:update-chat! {:chat-id     group-id
+                                   :public-key  public
+                                   :private-key private
+                                   :updated-at  timestamp}])
+         (when is-active
+           (protocol/start-watching-group!
+            {:web3     web3
+             :group-id group-id
+             :identity current-public-key
+             :keypair  keypair
+             :callback #(dispatch [:incoming-message %1 %2])})))))))
 
 (reg-fx
   ::start-watching-group
