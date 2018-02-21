@@ -33,7 +33,7 @@
         {:keys [sym-key-id]} (get-in db [:transport chat-id])]
     {:shh/post {:web3    (:web3 db)
                 :message {:sig identity
-                          :symKeyId sym-key-id
+                          :symKeyID sym-key-id
                           :ttl ttl
                           :powTarget 0.001
                           :powTime 1
