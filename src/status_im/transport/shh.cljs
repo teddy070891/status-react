@@ -1,6 +1,7 @@
 (ns status-im.transport.shh
   (:require [taoensso.timbre :as log]
-            [re-frame.core :as re-frame] 
+            [re-frame.core :as re-frame]
+            [status-im.transport.utils :as transport.utils]
             [status-im.transport.message.transit :as transit]))
 
 (defn get-new-key-pair [{:keys [web3 on-success on-error]}]
@@ -70,7 +71,8 @@
         :or {success-event :protocol/send-status-message-success
              error-event   :protocol/send-status-message-error}}]
     (post-message {:web3       web3
-                   :whisper-message (update whisper-message :payload transit/serialize)
+                   :whisper-message (update whisper-message :payload (comp transport.utils/from-utf8
+                                                                           transit/serialize))
                    :on-success #(re-frame/dispatch [success-event %])
                    :on-error   #(re-frame/dispatch [error-event %])})))
 

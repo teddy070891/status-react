@@ -6,7 +6,7 @@
             [status-im.chat.models :as models.chat]
             [status-im.utils.datetime :as datetime]
             [taoensso.timbre :as log]
-            [status-im.transport.utils :as web3.utils]
+            [status-im.transport.utils :as transport.utils]
             [cljs.reader :as reader]
             [status-im.transport.message.transit :as transit]
             status-im.transport.shh))
@@ -30,7 +30,7 @@
   (fn [cofx [js-error js-message chat-id]]
     (let [{:keys [payload sig]} (js->clj js-message :keywordize-keys true)
           status-message        (-> payload
-                                    web3.utils/to-utf8
+                                    transport.utils/to-utf8
                                     transit/deserialize)]
       (when (and sig status-message)
         (message/receive status-message cofx (or chat-id sig) sig)))))
