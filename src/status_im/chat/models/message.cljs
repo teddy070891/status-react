@@ -125,8 +125,7 @@
     (receive cofx message)))
 
 (defn- send-dapp-message!
-  [{{:accounts/keys [current-account-id] :as db} :db :as cofx}
-   {:keys [content-type chat-id] :as message}]
+  [{{:accounts/keys [current-account-id] :as db} :db :as cofx} chat-id {:keys [content-type] :as message}]
   (if (= content-type constants/content-type-command)
     (when-let [text-message (get-in message [:content :handler-data :text-message])]
       (handle-message-from-bot cofx {:message text-message
@@ -142,7 +141,7 @@
   [{{:keys [chats] :contacts/keys [contacts] :as db} :db :as cofx} chat-id send-record]
   (let [{:keys [dapp? fcm-token]} (get contacts chat-id)]
     (if dapp?
-      (send-dapp-message! cofx (:content send-record))
+      (send-dapp-message! cofx chat-id (:content send-record))
       (merge (transport/send send-record chat-id cofx)
              (when fcm-token {:send-notification {:message "message"
                                                   :payload {:title "Status" :body "You have a new message"}
@@ -166,7 +165,8 @@
                      :content-type constants/text-content-type
                      :outgoing     true
                      :timestamp    now
-                     :clock-value  (clocks-utils/send last-clock-value)}
+                     :clock-value  (clocks-utils/send last-clock-value)
+                     :show         true}
                     chat))
 
 (def ^:private transport-keys [:content :content-type :message-type :clock-value :timestamp])
@@ -217,7 +217,8 @@
                        :to-message   to-message
                        :type         (:type command)
                        :has-handler  (:has-handler command)
-                       :clock-value  (clocks-utils/send last-clock-value)}
+                       :clock-value  (clocks-utils/send last-clock-value)
+                       :show?        true} 
                       chat)))
 
 (defn send-command
@@ -228,7 +229,7 @@
          chat-id         :chat-id} params
         request          (:request handler-data)
         hidden-params    (->> (:params command) (filter :hidden) (map :name))
-        message          (prepare-command-message current-public-key (get-in chats chat-id) now request content)
+        message          (prepare-command-message current-public-key (get chats chat-id) now request content)
         send-record      (transport-contact/->ContactMessage (select-keys message transport-keys))
         message-with-id  (assoc message :message-id (transport.utils/message-id send-record))
         fx               (-> (chat-model/upsert-chat cofx {:chat-id chat-id})
