@@ -166,7 +166,7 @@
                      :outgoing     true
                      :timestamp    now
                      :clock-value  (clocks-utils/send last-clock-value)
-                     :show         true}
+                     :show?        true}
                     chat))
 
 (def ^:private transport-keys [:content :content-type :message-type :clock-value :timestamp])
