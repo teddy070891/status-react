@@ -121,9 +121,3 @@
       (if (empty? (disj common-keys :db))
         (merge fx new-fx)
         {:merging-fx-with-common-keys common-keys}))))
-
-(defn reduce-effects [cofx & effects-fn]
-  (second (reduce (fn [[cofx effects] effect-fn]
-                    (let [new-effects (effect-fn cofx)]
-                      [(update-db cofx new-effects) (safe-merge effects new-effects)]))
-                  [cofx {}] effects-fn)))

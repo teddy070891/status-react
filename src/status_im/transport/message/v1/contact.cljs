@@ -11,13 +11,13 @@
                                 :payload this}
                                cofx))
   (receive [this chat-id signature cofx]
-    (handlers/reduce-effects cofx
-                             (partial protocol/init-chat chat-id)
-                             (constantly {:shh/add-new-sym-key {:web3 (get-in cofx [:db :web3])
-                                                                :sym-key sym-key
-                                                                :chat-id chat-id
-                                                                :message message
-                                                                :success-event ::add-new-sym-key}}))))
+    (handlers/merge-fx cofx
+                       {:shh/add-new-sym-key {:web3 (get-in cofx [:db :web3])
+                                              :sym-key sym-key
+                                              :chat-id chat-id
+                                              :message message
+                                              :success-event ::add-new-sym-key}}
+                       (protocol/init-chat chat-id))))
 
 (defrecord ContactRequest [name profile-image address fcm-token]
   message/StatusMessage
