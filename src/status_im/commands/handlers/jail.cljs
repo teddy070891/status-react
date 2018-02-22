@@ -42,6 +42,8 @@
                [:chats chat-id :parameter-boxes (:name command) parameter-index]
                (when-not (string/blank? current-input)
                  [:chats chat-id :parameter-boxes :message]))]
+    ;; TODO(alwx):
+    (log/debug "ALWX Height: " height)
     (dispatch [:choose-predefined-expandable-height :parameter-box (or (keyword height) :default)])
     (when (and contains-markup? path (not= (get-in db path) markup))
       (dispatch [:set-in path returned])

@@ -15,17 +15,13 @@
 
 (defn choose-predefined-expandable-height
   [{:keys [current-chat-id chat-ui-props layout-height] :as db} key preset]
-  (if (= preset :max)
-    (set-expandable-height db key :max)
-    (let [input-height      (get-in chat-ui-props [current-chat-id :input-height])
-          chat-input-margin (if platform/ios?
-                              (get db :keyboard-height)
-                              0)
-          bottom            (+ input-height chat-input-margin)
-          height            (case preset
-                              :min input-utils/min-height
-                              (input-utils/default-container-area-height bottom layout-height))]
-      (set-expandable-height db key height))))
+  (let [input-height      (get-in chat-ui-props [current-chat-id :input-height])
+        chat-input-margin (if platform/ios?
+                            (get db :keyboard-height)
+                            0)
+        bottom            (+ input-height chat-input-margin)
+        height            (input-utils/default-container-area-height bottom layout-height)]
+    (set-expandable-height db key height)))
 
 ;;;; Handlers
 
@@ -35,6 +31,7 @@
   (fn [db [key value]]
     (set-expandable-height db key value)))
 
+;; TODO(alwx):
 (handlers/register-handler-db
   :choose-predefined-expandable-height
   [re-frame/trim-v]

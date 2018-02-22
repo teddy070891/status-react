@@ -7,7 +7,8 @@
             [status-im.chat.views.input.animations.responder :as responder]
             [status-im.chat.views.input.utils :as input-utils]
             [status-im.chat.styles.animations :as style]
-            [status-im.chat.styles.input.input :as input-style]))
+            [status-im.chat.styles.input.input :as input-style]
+            [taoensso.timbre :as log]))
 
 (defn expandable-view-on-update [{:keys [anim-value to-changed-height chat-input-margin height]}]
   (let [to-default-height (re-frame/subscribe [:get-default-container-area-height])
@@ -22,10 +23,7 @@
             to-changed-height (if dynamic-height?
                                 dynamic-height
                                 @to-changed-height)
-            to-change-height  (if (= to-changed-height :max)
-                                (input-utils/max-container-area-height @chat-input-margin @layout-height)
-                                to-changed-height)
-            to-value          (or to-change-height height @to-default-height)]
+            to-value          (or to-changed-height height @to-default-height)]
         (re-frame/dispatch [:set :expandable-view-height-to-value to-value])
         (animation/start
           (animation/spring anim-value {:toValue  to-value
@@ -51,9 +49,7 @@
        :component-will-unmount
        (fn []
          (re-frame/dispatch [:set-chat-ui-props {:fullscreen? false}])
-         (if height
-           (re-frame/dispatch [:set-expandable-height key height])
-           (re-frame/dispatch [:choose-predefined-expandable-height key :default])))
+         (re-frame/dispatch [:set-expandable-height key height]))
        :display-name
        "expandable-view"
        :reagent-render
