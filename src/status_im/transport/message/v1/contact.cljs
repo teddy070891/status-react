@@ -64,8 +64,9 @@
                    cofx))
   (receive [this chat-id signature cofx]
     {:dispatch [:pre-received-message (assoc content
-                                             :chat-id chat-id
-                                             :from    signature)]}))
+                                             :message-id (transport.utils/message-id this)
+                                             :chat-id    chat-id
+                                             :from       signature)]}))
 
 (handlers/register-handler-fx
   ::send-new-sym-key
