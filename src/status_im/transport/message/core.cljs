@@ -48,7 +48,7 @@
       (merge fx (models.chat/add-chat (assoc cofx :db (:db fx)) public-key chat-props)))))
 
 (defn- receive-contact-request-confirmation
-  [ public-key {:keys [name profile-image address fcm-token]}
+  [public-key {:keys [name profile-image address fcm-token]}
    {{:contacts/keys [contacts] :as db} :db :as cofx}]
   (when-let [contact (get contacts public-key)]
     (let [contact-props {:whisper-identity public-key

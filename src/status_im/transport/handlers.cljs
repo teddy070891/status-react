@@ -33,7 +33,7 @@
                                     transport.utils/to-utf8
                                     transit/deserialize)]
       (when (and sig status-message)
-        (message/receive status-message cofx (or chat-id sig) sig)))))
+        (message/receive status-message (or chat-id sig) sig cofx)))))
 
 (handlers/register-handler-fx
   :protocol/send-status-message-success

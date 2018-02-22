@@ -233,10 +233,10 @@
      :fcm-token     fcm-token}))
 
 (defn- send-contact-request [{:keys [db] :as cofx} chat-id]
-  (transport/send (transport-contact/map->ContactRequest (own-info db)) cofx chat-id))
+  (transport/send (transport-contact/map->ContactRequest (own-info db)) chat-id cofx))
 
 (defn- send-contact-request-confirmation [{:keys [db] :as cofx} chat-id]
-  (transport/send (transport-contact/map->ContactRequestConfirmed (own-info db)) cofx chat-id))
+  (transport/send (transport-contact/map->ContactRequestConfirmed (own-info db)) chat-id cofx))
 
 (register-handler-fx
   :add-new-contact-and-open-chat

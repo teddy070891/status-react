@@ -8,23 +8,23 @@
 (def ttl 10000) ;; ttl of 10 sec
 
 (defn init-chat [chat-id {:keys [db] :as cofx}]
-  (assoc-in db [:transport/chats chat-id] (transport.db/create-chat (transport.utils/get-topic chat-id))))
+  {:db (assoc-in db [:transport/chats chat-id] (transport.db/create-chat (transport.utils/get-topic chat-id)))})
 
 (defn is-new? [message-id]
   (when-not (message-cache/exists? message-id)
     (message-cache/add! message-id)))
 
 (defn requires-ack [message-id chat-id {:keys [db] :as cofx}]
-  (update-in db [:transport/chats chat-id :pending-ack] conj message-id))
+  {:db (update-in db [:transport/chats chat-id :pending-ack] conj message-id)})
 
 (defn ack [message-id chat-id {:keys [db] :as cofx}]
-  (update-in db [:transport/chats chat-id :ack] conj message-id))
+  {:db (update-in db [:transport/chats chat-id :ack] conj message-id)})
 
 (defn send [{:keys [payload chat-id]} {:keys [db] :as cofx}]
   ;; we assume that the chat contains the contact public-key
-  (let [{:keys [current-public-key]} db
+  (let [{:keys [current-public-key web3]} db
         {:keys [sym-key-id topic]} (get-in db [:transport/chats chat-id])]
-    {:shh/post {:web3    (:web3 db)
+    {:shh/post {:web3    web3
                 :message {:sig current-public-key
                           :symKeyID sym-key-id
                           :ttl ttl
@@ -34,9 +34,9 @@
                           :topic topic}}}))
 
 (defn send-with-pubkey [{:keys [payload chat-id]} {:keys [db] :as cofx}]
-  (let [{:keys [current-public-key]} db
+  (let [{:keys [current-public-key web3]} db
         {:keys [topic]} (get-in db [:transport/chats chat-id])]
-    {:shh/post {:web3    (:web3 db)
+    {:shh/post {:web3    web3
                 :message {:sig current-public-key
                           :pubKey chat-id
                           :ttl ttl

@@ -29,10 +29,10 @@
     fx))
 
 (defmacro fx->>
-  "Takes a map of effects and functions applying effects and returns a form that ensures
-  that updates to db are passed from function to function within the cofx :db key and
-  that only a :merging-fx-with-common-keys effect is returned if some functions are trying
-  to produce the same effects (excepted :db effect)"
+  "Takes a map of co-effects and functions taking co-effects, returning effects and returns
+  a form that ensures that updates to db are passed from function to function within 
+  the cofx `:db` key and that only a :merging-fx-with-common-keys effect is returned 
+  if some functions are trying to produce the same effects (except :db effect)"
   {:added "1.0"}
   [fx & forms]
   (let [form (first forms)

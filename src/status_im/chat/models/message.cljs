@@ -170,7 +170,7 @@
                                              :username (get-in accounts [current-account-id :name]))}
 
           :else 
-          (merge (transport/send (transport-contact/->ContactMessage (get-in options [:message :payload])) cofx chat-id) 
+          (merge (transport/send (transport-contact/->ContactMessage (get-in options [:message :payload])) chat-id cofx) 
                  (when fcm-token {:send-notification {:message "message"
                                                       :payload {:title "Status" :body "You have a new message"}
                                                       :tokens [fcm-token]}})))))))
