@@ -17,45 +17,45 @@
                                        ~db))) forms))]
          ~db))))
 
-(defmacro fx->*
+(defmacro fx->>*
   {:added "1.0"}
   [fx cofx & forms]
   (if forms
     (let [form (first forms)
           temp-cofx (gensym 'temp-cofx)]
       `(let [~temp-cofx (update-db ~cofx ~fx)
-             fx# (safe-merge ~fx ~(with-meta `(~(first form) ~temp-cofx ~@(next form)) (meta form)))]
-         (fx->* fx# ~temp-cofx ~@(next forms))))
+             fx# (safe-merge ~fx ~(with-meta `(~(first form) ~@(next form) ~temp-cofx) (meta form)))]
+         (fx->>* fx# ~temp-cofx ~@(next forms))))
     fx))
 
-(defmacro fx->
-  {:added "1.0"}
+(defmacro fx->>
   "Takes a map of effects and functions applying effects and returns a form that ensures
   that updates to db are passed from function to function within the cofx :db key and
   that only a :merging-fx-with-common-keys effect is returned if some functions are trying
   to produce the same effects (excepted :db effect)"
+  {:added "1.0"}
   [fx & forms]
   (let [form (first forms)
         temp-cofx (gensym 'temp-cofx)]
     `(let [~temp-cofx (update-db ~'cofx ~fx)
-           fx# (safe-merge ~fx ~(with-meta `(~(first form) ~temp-cofx ~@(next form)) (meta form)))]
-       (fx->* fx# ~temp-cofx ~@(next forms)))))
+           fx# (safe-merge ~fx ~(with-meta `(~(first form) ~@(next form) ~temp-cofx) (meta form)))]
+       (fx->>* fx# ~temp-cofx ~@(next forms)))))
 
-(comment (defn fn1 [{:keys [db]}]
+(comment (defn fn1 [{:keys [db]} ]
            {:db (assoc db :a 0)
             :a "1"})
 
-         (defn fn2 [{:keys [db]} a]
+         (defn fn2 [ a {:keys [db]}]
            {:db (update db :a + a)
             })
 
-         (defn fn3 [{:keys [db]} a]
+         (defn fn3 [ a {:keys [db]}]
            {:db (update db :a + a)})
 
          (let [a    1
                b    2
                cofx {:db {}}]
-           (fx-> {:db {:hello 2}}
-                 (fn1)
-                 (fn2 a)
-                 (fn3 b))))
+           (fx->> {:db {:hello 2}}
+                  (fn1)
+                  (fn2 a)
+                  (fn3 b))))
