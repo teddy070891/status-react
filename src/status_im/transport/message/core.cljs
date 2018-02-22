@@ -7,8 +7,8 @@
 
 (defprotocol StatusMessage
   "Protocol for transport layed status messages"
-  (send [this cofx chat-id])
-  (receive [this cofx chat-id signature]))
+  (send [this chat-id cofx])
+  (receive [this chat-id signature cofx]))
 
 ;; TODO (yenda) implement
 ;; :group-message
@@ -29,9 +29,9 @@
 
 ;;TODO (yenda) this is probably not the place to have these
 (defn- receive-contact-request
-  [{{:contacts/keys [contacts] :as db} :db :as cofx}
-   public-key
-   {:keys [name profile-image address fcm-token]}]
+  [public-key
+   {:keys [name profile-image address fcm-token]}
+   {{:contacts/keys [contacts] :as db} :db :as cofx}]
   (when-not (get contacts public-key)
     (let [contact-props {:whisper-identity public-key
                          :public-key       public-key
@@ -48,7 +48,8 @@
       (merge fx (models.chat/add-chat (assoc cofx :db (:db fx)) public-key chat-props)))))
 
 (defn- receive-contact-request-confirmation
-  [{{:contacts/keys [contacts] :as db} :db :as cofx} public-key {:keys [name profile-image address fcm-token]}]
+  [ public-key {:keys [name profile-image address fcm-token]}
+   {{:contacts/keys [contacts] :as db} :db :as cofx}]
   (when-let [contact (get contacts public-key)]
     (let [contact-props {:whisper-identity public-key
                          :address          address

@@ -6,12 +6,12 @@
 
 (defrecord NewContactKey [sym-key message]
   message/StatusMessage
-  (send [this {:keys [db] :as cofx} chat-id]
-    (merge {:db db}
-           (protocol/send-with-pubkey cofx {:web3    (:web3 db)
-                                            :chat-id chat-id
-                                            :payload this})))
-  (receive [this {:keys [db]} chat-id signature]
+  (send [this chat-id {:keys [db] :as cofx}]
+    (protocol/send-with-pubkey {:web3    (:web3 db)
+                                :chat-id chat-id
+                                :payload this}
+                               cofx))
+  (receive [this chat-id signature {:keys [db] :as cofx}]
     (let [{:keys [web3]} db]
       {:db (protocol/init-chat db chat-id)
        :shh/add-new-sym-key {:web3       web3
@@ -22,7 +22,7 @@
 
 (defrecord ContactRequest [name profile-image address fcm-token]
   message/StatusMessage
-  (send [this {:keys [db] :as cofx} chat-id]
+  (send [this chat-id {:keys [db] :as cofx}]
     (let [{:keys [web3]} db
           message-id (transport.utils/message-id this)
           new-db (-> (protocol/init-chat db chat-id)
@@ -32,35 +32,39 @@
                              :chat-id chat-id
                              :message this
                              :success-event ::send-new-sym-key}}))
-  (receive [this {:keys [db] :as cofx} chat-id signature]
+  (receive [this chat-id signature {:keys [db] :as cofx}]
     (let [message-id (transport.utils/message-id this)]
       (when (protocol/is-new? message-id)
-        (message/receive-contact-request (assoc cofx :db (protocol/ack db message-id chat-id))
-                                         signature
-                                         this)))))
+        (handlers/fx->> {}
+                        (protocol/ack message-id chat-id)
+                        (message/receive-contact-request signature
+                                                         this))))))
 
 (defrecord ContactRequestConfirmed [name profile-image address fcm-token]
   message/StatusMessage
-  (send [this {:keys [db] :as cofx} chat-id]
+  (send [this chat-id {:keys [db] :as cofx}]
     (let [message-id (transport.utils/message-id this)]
-      (-> {:db (protocol/requires-ack db message-id chat-id)}
-          (protocol/send {:web3    (:web3 db)
-                          :chat-id chat-id
-                          :payload this}))))
-  (receive [this {:keys [db] :as  cofx} chat-id signature]
+      (handlers/fx->> {}
+                      (protocol/requires-ack db message-id chat-id)
+                      (protocol/send {:web3    (:web3 db)
+                                      :chat-id chat-id
+                                      :payload this}))))
+  (receive [this chat-id signature {:keys [db] :as  cofx}]
     (let [message-id (transport.utils/message-id this)]
       (when (protocol/is-new? message-id)
-        (message/receive-contact-request-confirmation (assoc cofx :db (protocol/ack db message-id chat-id))
-                                                      signature
-                                                      this)))))
+        (handlers/fx->> {}
+                        (protocol/ack message-id chat-id)
+                        (message/receive-contact-request-confirmation signature
+                                                                      this))))))
 
 (defrecord ContactMessage [content]
   message/StatusMessage
-  (send [this {:keys [db] :as cofx} chat-id]
-    (protocol/send cofx {:web3    (:web3 db)
-                         :chat-id chat-id
-                         :payload this}))
-  (receive [this cofx chat-id signature]
+  (send [this chat-id {:keys [db] :as cofx}]
+    (protocol/send {:web3    (:web3 db)
+                    :chat-id chat-id
+                    :payload this}
+                   cofx))
+  (receive [this chat-id signature cofx]
     {:dispatch [:pre-received-message (assoc content
                                              :chat-id chat-id
                                              :from    signature)]}))
@@ -69,23 +73,21 @@
   ::send-new-sym-key
   (fn [{:keys [db] :as cofx} [_ {:keys [chat-id message sym-key sym-key-id]}]]
     (let [{:keys [web3 current-public-key]} db]
-      (merge {:shh/add-filter {:web3 web3
-                               :sym-key-id sym-key-id
-                               :topic (transport.utils/get-topic current-public-key)
-                               :chat-id chat-id}}
-             (message/send (NewContactKey. sym-key message)
-                           (assoc-in cofx [:db :transport/chats chat-id :sym-key-id] sym-key-id)
-                           chat-id)))))
+      (handlers/fx->> {:db (assoc-in db [:transport/chats chat-id :sym-key-id] sym-key-id)
+                       :shh/add-filter {:web3 web3
+                                        :sym-key-id sym-key-id
+                                        :topic (transport.utils/get-topic current-public-key)
+                                        :chat-id chat-id}}
+                      (message/send (NewContactKey. sym-key message)
+                                    chat-id)))))
 
 (handlers/register-handler-fx
   ::add-new-sym-key
   (fn [{:keys [db] :as cofx} [_ {:keys [sym-key-id chat-id message]}]]
     (let [{:keys [web3 current-public-key]} db]
-      (merge {:shh/add-filter {:web3 web3
-                               :sym-key-id sym-key-id
-                               :topic (transport.utils/get-topic current-public-key)
-                               :chat-id chat-id}}
-             (message/receive message
-                              (assoc-in cofx [:db :transport/chats chat-id :sym-key-id] sym-key-id)
-                              chat-id
-                              chat-id)))))
+      (handlers/fx->> {:db (assoc-in db [:transport/chats chat-id :sym-key-id] sym-key-id)
+                       :shh/add-filter {:web3 web3
+                                        :sym-key-id sym-key-id
+                                        :topic (transport.utils/get-topic current-public-key)
+                                        :chat-id chat-id}}
+                      (message/receive message chat-id chat-id)))))
